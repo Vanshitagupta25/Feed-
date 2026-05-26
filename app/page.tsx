@@ -354,8 +354,14 @@ export default function Page() {
     <div className="h-screen flex flex-col bg-[#DDE8E3] text-foreground overflow-hidden">
       {/* Top Header Bar */}
       <header className="h-14 bg-[#006239] border-b border-[#00845C] flex items-center justify-between px-6 flex-shrink-0 z-50">
-        {/* Brand Name Left */}
-        <h1 className="text-xl font-bold text-white">Echo</h1>
+        {/* Brand Name Left with SVG Logo */}
+        <div className="flex items-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-6 w-6 inline-block">
+            <path d="M4 4H9L14 15L19 4H24L16.5 20.5H11.5L4 4Z" fill="currentColor" />
+            <path d="M10.5 4H13.5L8.5 15H5.5L10.5 4Z" fill="currentColor" opacity="0.4" />
+          </svg>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">Verge</h1>
+        </div>
         
         {/* User Identity Right */}
         <ProfileToggle

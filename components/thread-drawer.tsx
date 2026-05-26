@@ -1,7 +1,7 @@
 'use client';
 
 import { X, MessageCircle, Trash2, Reply, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Post, Comment } from '@/app/page';
 
 interface ThreadDrawerProps {
@@ -26,7 +26,7 @@ const NestedComment = ({
   allComments: Comment[];
   depth?: number;
   isAdmin: boolean;
-  onReply: (commentId: string, depth: number) => void;
+  onReply: (commentId: string, author: string) => void;
   onDelete: (commentId: string) => void;
 }) => {
   const childComments = allComments.filter(c => c.parentId === comment.id);
@@ -58,9 +58,9 @@ const NestedComment = ({
             {/* Comment Content */}
             <p className="text-sm text-white/90 mt-2 leading-relaxed break-words">{comment.content}</p>
 
-            {/* Reply Button */}
+            {/* Reply Button - passes comment id and author for targeting */}
             <button
-              onClick={() => onReply(comment.id, depth)}
+              onClick={() => onReply(comment.id, comment.author)}
               className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-[#00A870] transition-colors"
             >
               <Reply size={12} />
@@ -100,25 +100,53 @@ export default function ThreadDrawer({
   onHideCreatePost,
 }: ThreadDrawerProps) {
   const [replyContent, setReplyContent] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; author: string } | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [hasScrolledIntoComments, setHasScrolledIntoComments] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const commentsStartRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const rootComments = comments.filter(c => c.parentId === null);
 
+  // Scroll-spy logic: hide Create Post button when scrolled into comment zone
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    const commentsStart = commentsStartRef.current;
+
+    if (!scrollContainer || !commentsStart) return;
+
+    const handleScroll = () => {
+      const commentsRect = commentsStart.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      
+      // Check if comments section is in view (user has scrolled into comment zone)
+      const isInCommentZone = commentsRect.top < containerRect.top + 100;
+      
+      if (isInCommentZone !== hasScrolledIntoComments) {
+        setHasScrolledIntoComments(isInCommentZone);
+        if (onHideCreatePost) {
+          onHideCreatePost(isInCommentZone);
+        }
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [hasScrolledIntoComments, onHideCreatePost]);
+
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    // Hide the Create Post button when input is focused
     if (onHideCreatePost) {
       onHideCreatePost(true);
     }
   };
 
   const handleInputBlur = () => {
-    // Only unfocus if there's no content being typed
     if (!replyContent.trim()) {
       setIsInputFocused(false);
-      // Show the Create Post button again when input loses focus
-      if (onHideCreatePost) {
+      // Only show Create Post if not scrolled into comments
+      if (onHideCreatePost && !hasScrolledIntoComments) {
         onHideCreatePost(false);
       }
     }
@@ -126,21 +154,35 @@ export default function ThreadDrawer({
 
   const handleReply = () => {
     if (replyContent.trim()) {
-      onAddComment(post.id, replyContent, replyingTo);
+      onAddComment(post.id, replyContent, replyingTo?.id || null);
       setReplyContent('');
       setReplyingTo(null);
       setIsInputFocused(false);
-      // Show the Create Post button again after submission
-      if (onHideCreatePost) {
+      if (onHideCreatePost && !hasScrolledIntoComments) {
         onHideCreatePost(false);
       }
+    }
+  };
+
+  const handleReplyToComment = (commentId: string, author: string) => {
+    setReplyingTo({ id: commentId, author });
+    // Focus the input when replying
+    inputRef.current?.focus();
+  };
+
+  const handleCancelReply = () => {
+    setReplyContent('');
+    setReplyingTo(null);
+    setIsInputFocused(false);
+    if (onHideCreatePost && !hasScrolledIntoComments) {
+      onHideCreatePost(false);
     }
   };
 
   return (
     <div className="w-96 border-l border-[#00845C] bg-[#006239] flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#00845C] flex items-center justify-between bg-[#005230] backdrop-blur-sm sticky top-0 z-10">
+      <div className="px-6 py-4 border-b border-[#00845C] flex items-center justify-between bg-[#0a0a0a] backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2 text-white font-semibold">
           <MessageCircle size={18} />
           <span>Thread</span>
@@ -154,9 +196,9 @@ export default function ThreadDrawer({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {/* Parent Post - Pinned */}
-        <div className="px-6 py-5 border-b border-[#00845C]/50 bg-[#005230] sticky top-0 z-5">
+        <div className="px-6 py-5 border-b border-[#00845C]/50 bg-[#0a0a0a] sticky top-0 z-5">
           <div className="mb-3">
             <span className="text-xs font-bold text-[#00A870] uppercase tracking-wider">Parent Post</span>
           </div>
@@ -192,8 +234,8 @@ export default function ThreadDrawer({
           </div>
         </div>
 
-        {/* Comments Section */}
-        <div className="px-6 py-6">
+        {/* Comments Section - marker for scroll-spy */}
+        <div ref={commentsStartRef} className="px-6 py-6">
           {rootComments.length > 0 ? (
             <div className="space-y-4">
               {rootComments.map((comment) => (
@@ -203,7 +245,7 @@ export default function ThreadDrawer({
                   allComments={comments}
                   depth={0}
                   isAdmin={isAdmin}
-                  onReply={setReplyingTo}
+                  onReply={handleReplyToComment}
                   onDelete={onDeleteComment}
                 />
               ))}
@@ -218,10 +260,10 @@ export default function ThreadDrawer({
       </div>
 
       {/* Reply Input */}
-      <div className="px-6 py-5 border-t border-[#00845C] bg-[#005230] backdrop-blur-sm space-y-3">
+      <div className="px-6 py-5 border-t border-[#00845C] bg-[#0a0a0a] backdrop-blur-sm space-y-3">
         {replyingTo && (
-          <div className="bg-white/10 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
-            <span className="text-white/70">Replying to comment...</span>
+          <div className="bg-[#1a1a1a] px-3 py-2 rounded-lg flex items-center justify-between text-xs border border-[#333]">
+            <span className="text-white/70">Replying to <strong className="text-[#00A870]">@{replyingTo.author}</strong></span>
             <button
               onClick={() => setReplyingTo(null)}
               className="text-white/50 hover:text-white transition-colors"
@@ -232,24 +274,18 @@ export default function ThreadDrawer({
         )}
 
         <textarea
+          ref={inputRef}
           value={replyContent}
           onChange={(e) => setReplyContent(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          placeholder="Reply anonymously to this thread..."
-          className="w-full min-h-16 px-4 py-3 bg-[#006239] border border-[#00845C] rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent resize-none transition-all"
+          placeholder={replyingTo ? `Reply to @${replyingTo.author}...` : "Reply anonymously to this thread..."}
+          className="w-full min-h-16 px-4 py-3 bg-[#0a0a0a] border border-[#333] rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent resize-none transition-all"
         />
 
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              setReplyContent('');
-              setReplyingTo(null);
-              setIsInputFocused(false);
-              if (onHideCreatePost) {
-                onHideCreatePost(false);
-              }
-            }}
+            onClick={handleCancelReply}
             className="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 font-medium transition-colors text-xs"
           >
             Cancel

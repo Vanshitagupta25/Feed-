@@ -76,7 +76,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-[#006239] border border-[#00845C] rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-[#005230] border-b border-[#00845C]">
+        <div className="flex items-center justify-between px-6 py-4 bg-[#0a0a0a] border-b border-[#333]">
           <h2 className="text-lg font-bold text-white">Create a Post</h2>
           <button
             onClick={onClose}
@@ -109,7 +109,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="What's on your mind? Share your feedback, ideas, or thoughts..."
-              className="w-full min-h-32 px-4 py-3 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all resize-none"
+              className="w-full min-h-32 px-4 py-3 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all resize-none"
               autoFocus
             />
             <p className="text-xs text-white/50">{content.length} characters</p>
@@ -135,7 +135,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
             <button
               type="button"
               onClick={triggerFileInput}
-              className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-[#005230] border-2 border-dashed border-[#00845C] rounded-xl text-white/70 hover:border-[#00A870] hover:bg-[#00A870]/5 transition-all"
+              className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-[#0a0a0a] border-2 border-dashed border-[#333] rounded-xl text-white/70 hover:border-[#00A870] hover:bg-[#00A870]/5 transition-all"
             >
               <Upload size={20} />
               <span className="text-sm font-medium">
@@ -166,7 +166,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-[#005230] border-t border-[#00845C] flex gap-3 justify-end">
+        <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#333] flex gap-3 justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-[#00845C] hover:bg-white/10 text-white font-semibold transition-colors"

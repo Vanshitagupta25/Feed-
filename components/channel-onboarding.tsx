@@ -10,12 +10,6 @@ interface ChannelOnboardingProps {
   onComplete: () => void;
 }
 
-const channelImages = {
-  '1': 'linear-gradient(135deg, #00A870 0%, #006239 100%)',
-  '2': 'linear-gradient(135deg, #006239 0%, #004A2D 100%)',
-  '3': 'linear-gradient(135deg, #00845C 0%, #006239 100%)',
-};
-
 export default function ChannelOnboarding({
   channels,
   joinedChannelIds,
@@ -24,32 +18,44 @@ export default function ChannelOnboarding({
 }: ChannelOnboardingProps) {
   const allJoined = channels.length > 0 && joinedChannelIds.length === channels.length;
 
+  const handleJoinAll = () => {
+    channels.forEach(channel => {
+      if (!joinedChannelIds.includes(channel.id)) {
+        onJoinChannel(channel.id);
+      }
+    });
+  };
+
+  const VergeLogoSVG = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+      <path d="M4 4H9L14 15L19 4H24L16.5 20.5H11.5L4 4Z" fill="currentColor" />
+      <path d="M10.5 4H13.5L8.5 15H5.5L10.5 4Z" fill="currentColor" opacity="0.4" />
+    </svg>
+  );
+
   return (
     <div className="fixed inset-0 bg-[#DDE8E3]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[#006239] border border-[#00845C] rounded-xl p-8 max-w-2xl w-full space-y-6">
-        {/* Header */}
+        {/* Header with Verge branding */}
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white">Welcome to Echo</h2>
+          <div className="flex items-center gap-2 text-white mb-2">
+            <VergeLogoSVG />
+            <span className="text-lg font-extrabold tracking-tight">Verge</span>
+          </div>
+          <h2 className="text-2xl font-bold text-white">Welcome to Verge</h2>
           <p className="text-white/60">Join channels to start sharing feedback with your team</p>
         </div>
 
-        {/* Channel Cards */}
+        {/* Channel Cards - Black card backings */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {channels.map((channel) => {
             const isJoined = joinedChannelIds.includes(channel.id);
-            const gradient = channelImages[channel.id as keyof typeof channelImages] || channelImages['1'];
 
             return (
               <div
                 key={channel.id}
-                className="group relative overflow-hidden rounded-lg border border-[#00845C] hover:border-[#00A870] transition-all duration-200"
+                className="group relative overflow-hidden rounded-lg border border-[#333] bg-[#0a0a0a] hover:border-[#00A870] transition-all duration-200"
               >
-                {/* Channel Image Background */}
-                <div
-                  className="absolute inset-0"
-                  style={{ background: gradient, opacity: isJoined ? 0.3 : 0.1 }}
-                />
-
                 {/* Content */}
                 <div className="relative p-4 space-y-3 flex flex-col h-full">
                   {/* Channel Name */}
@@ -86,19 +92,39 @@ export default function ChannelOnboarding({
           })}
         </div>
 
-        {/* Action Footer */}
-        <div className="flex justify-end pt-4 border-t border-[#00845C]/30">
+        {/* Action Footer with Skip on left */}
+        <div className="flex justify-between items-center pt-4 border-t border-[#00845C]/30">
+          {/* Skip button - far left */}
           <button
             onClick={onComplete}
-            disabled={!allJoined}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              allJoined
-                ? 'bg-[#00A870] hover:bg-[#00A870]/90 text-white hover:shadow-lg hover:shadow-[#00A870]/30'
-                : 'bg-[#4A7A66] text-white/50 cursor-not-allowed'
-            }`}
+            className="text-white/60 hover:text-white text-sm font-medium transition-colors"
           >
-            {allJoined ? 'Continue to Feed' : 'Join all channels to continue'}
+            Skip
           </button>
+
+          <div className="flex gap-3">
+            {/* Join All Button - Always clickable */}
+            <button
+              onClick={handleJoinAll}
+              disabled={allJoined}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                allJoined
+                  ? 'bg-[#4A7A66] text-white/50 cursor-not-allowed'
+                  : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+            >
+              {allJoined ? 'All Joined' : 'Join All Channels'}
+            </button>
+
+            {/* Continue Button */}
+            <button
+              onClick={onComplete}
+              className="px-6 py-2 rounded-lg font-semibold transition-all bg-[#00A870] hover:bg-[#00A870]/90 text-white hover:shadow-lg hover:shadow-[#00A870]/30 flex items-center gap-2"
+            >
+              Continue to Feed
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

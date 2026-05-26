@@ -38,7 +38,13 @@ export default function Sidebar({
     <div className="w-64 border-r border-[#00845C] bg-[#006239] text-white flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-[#00845C]/30">
-        <h1 className="text-xl font-bold text-white">WorkspaceHub</h1>
+        <div className="flex items-center gap-2 text-white">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+            <path d="M4 4H9L14 15L19 4H24L16.5 20.5H11.5L4 4Z" fill="currentColor" />
+            <path d="M10.5 4H13.5L8.5 15H5.5L10.5 4Z" fill="currentColor" opacity="0.4" />
+          </svg>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">Verge</h1>
+        </div>
         <p className="text-xs text-white/60 mt-1">Internal Community Platform</p>
       </div>
 
@@ -109,7 +115,7 @@ export default function Sidebar({
                   placeholder="e.g., feedback-requests"
                   value={newChannelName}
                   onChange={(e) => setNewChannelName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
+                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
                 />
               </div>
 
@@ -120,7 +126,7 @@ export default function Sidebar({
                   placeholder="What is this channel for?"
                   value={newChannelDesc}
                   onChange={(e) => setNewChannelDesc(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
+                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
                 />
               </div>
             </div>
