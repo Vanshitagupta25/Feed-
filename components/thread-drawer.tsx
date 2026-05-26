@@ -11,6 +11,7 @@ interface ThreadDrawerProps {
   onClose: () => void;
   onAddComment: (postId: string, content: string, parentId: string | null) => void;
   onDeleteComment: (commentId: string) => void;
+  onHideCreatePost?: (hide: boolean) => void;
 }
 
 const NestedComment = ({
@@ -30,7 +31,7 @@ const NestedComment = ({
 }) => {
   const childComments = allComments.filter(c => c.parentId === comment.id);
   const indentClass = depth > 0 ? 'ml-8' : '';
-  const borderClass = depth > 0 ? 'border-l-2 border-slate-700 hover:border-primary/50 pl-4 transition-colors' : '';
+  const borderClass = depth > 0 ? 'border-l-2 border-white/30 hover:border-[#00A870]/50 pl-4 transition-colors' : '';
 
   return (
     <div className={`${indentClass} pb-6`}>
@@ -44,23 +45,23 @@ const NestedComment = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2 justify-between">
               <div className="flex items-baseline gap-2">
-                <span className="font-mono font-semibold text-foreground text-sm">{comment.author}</span>
-                <span className="text-xs text-foreground/50">{comment.timestamp}</span>
+                <span className="font-mono font-semibold text-white text-sm">{comment.author}</span>
+                <span className="text-xs text-white/50">{comment.timestamp}</span>
               </div>
               {isAdmin && (
-                <button onClick={() => onDelete(comment.id)} className="p-1 rounded-lg text-destructive hover:bg-destructive/20 transition-all">
+                <button onClick={() => onDelete(comment.id)} className="p-1 rounded-lg text-red-300 hover:bg-red-500/20 transition-all">
                   <Trash2 size={14} />
                 </button>
               )}
             </div>
 
             {/* Comment Content */}
-            <p className="text-sm text-foreground/90 mt-2 leading-relaxed break-words">{comment.content}</p>
+            <p className="text-sm text-white/90 mt-2 leading-relaxed break-words">{comment.content}</p>
 
             {/* Reply Button */}
             <button
               onClick={() => onReply(comment.id, depth)}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-foreground/60 hover:text-primary transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-[#00A870] transition-colors"
             >
               <Reply size={12} />
               <span>Reply</span>
@@ -96,30 +97,57 @@ export default function ThreadDrawer({
   onClose,
   onAddComment,
   onDeleteComment,
+  onHideCreatePost,
 }: ThreadDrawerProps) {
   const [replyContent, setReplyContent] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const rootComments = comments.filter(c => c.parentId === null);
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    // Hide the Create Post button when input is focused
+    if (onHideCreatePost) {
+      onHideCreatePost(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Only unfocus if there's no content being typed
+    if (!replyContent.trim()) {
+      setIsInputFocused(false);
+      // Show the Create Post button again when input loses focus
+      if (onHideCreatePost) {
+        onHideCreatePost(false);
+      }
+    }
+  };
 
   const handleReply = () => {
     if (replyContent.trim()) {
       onAddComment(post.id, replyContent, replyingTo);
       setReplyContent('');
       setReplyingTo(null);
+      setIsInputFocused(false);
+      // Show the Create Post button again after submission
+      if (onHideCreatePost) {
+        onHideCreatePost(false);
+      }
     }
   };
+
   return (
-    <div className="w-96 border-l border-border bg-card flex flex-col">
+    <div className="w-96 border-l border-[#00845C] bg-[#006239] flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center gap-2 text-foreground font-semibold">
+      <div className="px-6 py-4 border-b border-[#00845C] flex items-center justify-between bg-[#005230] backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2 text-white font-semibold">
           <MessageCircle size={18} />
           <span>Thread</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-border/30 rounded-lg transition-all text-foreground/60 hover:text-foreground"
+          className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-white/60 hover:text-white"
         >
           <X size={20} />
         </button>
@@ -128,9 +156,9 @@ export default function ThreadDrawer({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Parent Post - Pinned */}
-        <div className="px-6 py-5 border-b border-border/50 bg-secondary/30 sticky top-0 z-5">
+        <div className="px-6 py-5 border-b border-[#00845C]/50 bg-[#005230] sticky top-0 z-5">
           <div className="mb-3">
-            <span className="text-xs font-bold text-accent uppercase tracking-wider">Parent Post</span>
+            <span className="text-xs font-bold text-[#00A870] uppercase tracking-wider">Parent Post</span>
           </div>
 
           <div className="flex items-start gap-3 group">
@@ -141,13 +169,13 @@ export default function ThreadDrawer({
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 justify-between">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-mono font-semibold text-foreground text-sm">{post.author}</span>
-                  <span className="text-xs text-foreground/50">{post.timestamp}</span>
+                  <span className="font-mono font-semibold text-white text-sm">{post.author}</span>
+                  <span className="text-xs text-white/50">{post.timestamp}</span>
                 </div>
               </div>
 
-              <h3 className="font-bold text-foreground text-sm mt-2">{post.title}</h3>
-              <p className="text-sm text-foreground/80 mt-2 leading-relaxed">{post.content}</p>
+              <h3 className="font-bold text-white text-sm mt-2">{post.title}</h3>
+              <p className="text-sm text-white/80 mt-2 leading-relaxed">{post.content}</p>
 
               {/* Post Image in Thread */}
               {post.image && (
@@ -156,6 +184,7 @@ export default function ThreadDrawer({
                     src={post.image}
                     alt="Post media"
                     className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
                   />
                 </div>
               )}
@@ -181,21 +210,21 @@ export default function ThreadDrawer({
             </div>
           ) : (
             <div className="text-center py-12">
-              <MessageCircle size={32} className="mx-auto mb-3 text-foreground/30" />
-              <p className="text-sm text-foreground/60">No replies yet. Start the conversation!</p>
+              <MessageCircle size={32} className="mx-auto mb-3 text-white/30" />
+              <p className="text-sm text-white/60">No replies yet. Start the conversation!</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Reply Input */}
-      <div className="px-6 py-5 border-t border-border bg-card/50 backdrop-blur-sm space-y-3">
+      <div className="px-6 py-5 border-t border-[#00845C] bg-[#005230] backdrop-blur-sm space-y-3">
         {replyingTo && (
-          <div className="bg-secondary/30 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
-            <span className="text-foreground/70">Replying to comment...</span>
+          <div className="bg-white/10 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
+            <span className="text-white/70">Replying to comment...</span>
             <button
               onClick={() => setReplyingTo(null)}
-              className="text-foreground/50 hover:text-foreground transition-colors"
+              className="text-white/50 hover:text-white transition-colors"
             >
               <X size={14} />
             </button>
@@ -205,8 +234,10 @@ export default function ThreadDrawer({
         <textarea
           value={replyContent}
           onChange={(e) => setReplyContent(e.target.value)}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           placeholder="Reply anonymously to this thread..."
-          className="w-full min-h-16 px-4 py-3 bg-background border border-border/50 rounded-lg text-foreground text-sm placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent resize-none transition-all"
+          className="w-full min-h-16 px-4 py-3 bg-[#006239] border border-[#00845C] rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent resize-none transition-all"
         />
 
         <div className="flex gap-2">
@@ -214,15 +245,19 @@ export default function ThreadDrawer({
             onClick={() => {
               setReplyContent('');
               setReplyingTo(null);
+              setIsInputFocused(false);
+              if (onHideCreatePost) {
+                onHideCreatePost(false);
+              }
             }}
-            className="flex-1 px-4 py-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 text-foreground/70 font-medium transition-colors text-xs"
+            className="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 font-medium transition-colors text-xs"
           >
             Cancel
           </button>
           <button
             onClick={handleReply}
             disabled={!replyContent.trim()}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 disabled:from-muted disabled:to-muted disabled:cursor-not-allowed text-white font-semibold transition-all text-xs"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#00A870] to-[#006239] hover:from-[#00A870]/90 hover:to-[#006239]/90 disabled:from-[#4A7A66] disabled:to-[#4A7A66] disabled:cursor-not-allowed text-white font-semibold transition-all text-xs"
           >
             <Send size={14} />
             <span>Reply</span>

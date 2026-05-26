@@ -73,6 +73,7 @@ export default function Page() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showPostCreation, setShowPostCreation] = useState(false);
   const [joinedChannelIds, setJoinedChannelIds] = useState<string[]>([]);
+  const [isCommentInputFocused, setIsCommentInputFocused] = useState(false);
 
   const [channels, setChannels] = useState<Channel[]>([
     { id: '1', name: 'product-feedback', description: 'Share feedback on our products and features' },
@@ -350,7 +351,21 @@ export default function Page() {
   }
 
   return (
-    <div className="h-screen flex dark bg-background text-foreground overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#DDE8E3] text-foreground overflow-hidden">
+      {/* Top Header Bar */}
+      <header className="h-14 bg-[#006239] border-b border-[#00845C] flex items-center justify-between px-6 flex-shrink-0 z-50">
+        {/* Brand Name Left */}
+        <h1 className="text-xl font-bold text-white">Echo</h1>
+        
+        {/* User Identity Right */}
+        <ProfileToggle
+          currentUser={currentUser}
+          onUpdateUsername={handleUpdateUsername}
+          onUpdateAvatar={handleUpdateAvatar}
+          onLogout={handleLogout}
+        />
+      </header>
+
       {/* Channel Onboarding */}
       {isAuthenticated && joinedChannelIds.length === 0 && (
         <ChannelOnboarding
@@ -361,15 +376,9 @@ export default function Page() {
         />
       )}
 
-      {/* Profile Toggle (Top-Left) */}
-      <ProfileToggle
-        currentUser={currentUser}
-        onUpdateUsername={handleUpdateUsername}
-        onUpdateAvatar={handleUpdateAvatar}
-        onLogout={handleLogout}
-      />
-
-      <Sidebar
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar
         channels={channels}
         activeChannelId={activeChannelId}
         onSelectChannel={setActiveChannelId}
@@ -389,7 +398,7 @@ export default function Page() {
       />
 
       {/* Floating Post Creation FAB */}
-      <FloatingPostFAB onClick={() => setShowPostCreation(true)} />
+      <FloatingPostFAB onClick={() => setShowPostCreation(true)} isVisible={!isCommentInputFocused} />
 
       {/* Post Creation Screen */}
       <PostCreationScreen
@@ -407,8 +416,10 @@ export default function Page() {
           onClose={() => setSelectedThreadId(null)}
           onAddComment={addComment}
           onDeleteComment={deleteComment}
+          onHideCreatePost={setIsCommentInputFocused}
         />
       )}
+      </div>
     </div>
   );
 }

@@ -29,43 +29,43 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
   };
 
   return (
-    <div className="min-h-screen dark bg-background text-foreground flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#DDE8E3] text-[#006239] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo/Branding */}
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00A870] to-[#006239] flex items-center justify-center">
               <Shield size={24} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              WorkspaceHub
+            <h1 className="text-2xl font-bold text-[#006239]">
+              Echo
             </h1>
           </div>
-          <p className="text-foreground/60 text-sm">Anonymous & Structured Feedback Platform</p>
+          <p className="text-[#006239]/60 text-sm">Anonymous & Structured Feedback Platform</p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-card border border-border rounded-xl p-8 space-y-6">
+        <div className="bg-[#006239] border border-[#00845C] rounded-xl p-8 space-y-6">
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-foreground">Welcome Back</h2>
-            <p className="text-sm text-foreground/60">Sign in to your account to continue</p>
+            <h2 className="text-xl font-bold text-white">Welcome Back</h2>
+            <p className="text-sm text-white/60">Sign in to your account to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Input */}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
+              <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-white/70">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 text-foreground/40" size={18} />
+                <Mail className="absolute left-3 top-3 text-white/40" size={18} />
                 <input
                   id="email"
                   type="email"
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -73,18 +73,18 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
 
             {/* Username Input */}
             <div className="space-y-2">
-              <label htmlFor="username" className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
+              <label htmlFor="username" className="text-xs font-semibold uppercase tracking-wider text-white/70">
                 Username
               </label>
               <div className="relative">
-                <UserIcon className="absolute left-3 top-3 text-foreground/40" size={18} />
+                <UserIcon className="absolute left-3 top-3 text-white/40" size={18} />
                 <input
                   id="username"
                   type="text"
                   placeholder="your_username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -92,18 +92,18 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
 
             {/* Password Input */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
+              <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-white/70">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 text-foreground/40" size={18} />
+                <Lock className="absolute left-3 top-3 text-white/40" size={18} />
                 <input
                   id="password"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-[#005230] border border-[#00845C] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -113,7 +113,7 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
             <button
               type="submit"
               disabled={isLoading || !email || !username || !password}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-6 rounded-lg bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 disabled:from-muted disabled:to-muted disabled:cursor-not-allowed text-primary-foreground font-semibold transition-all shadow-lg hover:shadow-primary/30"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-6 rounded-lg bg-gradient-to-r from-[#00A870] to-[#006239] hover:from-[#00A870]/90 hover:to-[#006239]/90 disabled:from-[#4A7A66] disabled:to-[#4A7A66] disabled:cursor-not-allowed text-white font-semibold transition-all shadow-lg hover:shadow-[#00A870]/30"
             >
               <LogIn size={18} />
               <span>{isLoading ? 'Signing in...' : 'Sign In'}</span>
@@ -121,9 +121,9 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
           </form>
 
           {/* Demo Info */}
-          <div className="pt-6 border-t border-border/30 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Demo Credentials</p>
-            <div className="space-y-2 text-xs text-foreground/60 bg-secondary/20 rounded-lg p-3">
+          <div className="pt-6 border-t border-[#00845C]/30 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Demo Credentials</p>
+            <div className="space-y-2 text-xs text-white/60 bg-[#005230] rounded-lg p-3">
               <p><strong>Email:</strong> demo@company.com</p>
               <p><strong>Password:</strong> demo123</p>
             </div>
@@ -131,8 +131,8 @@ export default function AuthScreen({ onAuthenticate }: { onAuthenticate: (user: 
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-xs text-foreground/50">
-          <p>Enterprise Anonymous Feedback &amp; Collaboration</p>
+        <div className="mt-6 text-center text-xs text-[#006239]/50">
+          <p>Enterprise Anonymous Feedback & Collaboration</p>
           <p className="mt-1">Your feedback remains protected</p>
         </div>
       </div>

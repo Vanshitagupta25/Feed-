@@ -48,23 +48,31 @@ export default function ProfileToggle({ currentUser, onUpdateUsername, onUpdateA
   };
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-all"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
       >
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-xs font-bold">
-          {currentUser.avatar}
-        </div>
-        <span className="text-sm font-semibold text-foreground">{currentUser.username}</span>
-        <ChevronDown size={16} className={`text-foreground/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {avatarPreview ? (
+          <img
+            src={avatarPreview}
+            alt="Avatar"
+            className="w-7 h-7 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00A870] to-[#006239] flex items-center justify-center text-white text-xs font-bold">
+            {currentUser.avatar}
+          </div>
+        )}
+        <span className="text-sm font-semibold text-white">{currentUser.username}</span>
+        <ChevronDown size={16} className={`text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-[#006239] border border-[#00845C] rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
           {/* Profile Header */}
-          <div className="bg-secondary/20 p-4 space-y-4">
+          <div className="bg-[#005230] p-4 space-y-4">
             {/* Avatar & Info */}
             <div className="flex items-center gap-3">
               <div className="relative group">
@@ -75,7 +83,7 @@ export default function ProfileToggle({ currentUser, onUpdateUsername, onUpdateA
                     className="w-12 h-12 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-sm font-bold">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#00A870] to-[#006239] flex items-center justify-center text-white text-sm font-bold">
                     {currentUser.avatar}
                   </div>
                 )}
@@ -94,8 +102,8 @@ export default function ProfileToggle({ currentUser, onUpdateUsername, onUpdateA
                 />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">{currentUser.email}</p>
-                <p className="text-xs text-foreground/60">{currentUser.username}</p>
+                <p className="text-sm font-semibold text-white">{currentUser.email}</p>
+                <p className="text-xs text-white/60">{currentUser.username}</p>
               </div>
             </div>
 
@@ -106,20 +114,20 @@ export default function ProfileToggle({ currentUser, onUpdateUsername, onUpdateA
                   type="text"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full px-3 py-2 bg-[#006239] border border-[#00845C] rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 transition-all"
                   placeholder="Enter username"
                   autoFocus
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={handleSaveUsername}
-                    className="flex-1 px-3 py-1.5 bg-primary/30 hover:bg-primary/40 text-primary text-xs font-semibold rounded-lg transition-colors"
+                    className="flex-1 px-3 py-1.5 bg-[#00A870]/30 hover:bg-[#00A870]/40 text-white text-xs font-semibold rounded-lg transition-colors"
                   >
                     Save
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="flex-1 px-3 py-1.5 bg-border/50 hover:bg-border text-foreground/70 text-xs font-semibold rounded-lg transition-colors"
+                    className="flex-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/70 text-xs font-semibold rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -131,37 +139,37 @@ export default function ProfileToggle({ currentUser, onUpdateUsername, onUpdateA
                   setEditingUsername(true);
                   setUsernameInput(currentUser.username);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-border/30 hover:bg-border/50 text-foreground/70 text-xs font-semibold rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white/70 text-xs font-semibold rounded-lg transition-colors"
               >
                 <Pencil size={14} />
-                Edit Username
+                Edit Profile / Edit Username
               </button>
             )}
           </div>
 
           {/* Stats */}
-          <div className="border-t border-border p-4 grid grid-cols-2 gap-4">
+          <div className="border-t border-[#00845C] p-4 grid grid-cols-2 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">{currentUser.followers}</p>
-              <p className="text-xs text-foreground/60 flex items-center justify-center gap-1 mt-1">
+              <p className="text-2xl font-bold text-[#00A870]">{currentUser.followers}</p>
+              <p className="text-xs text-white/60 flex items-center justify-center gap-1 mt-1">
                 <Users size={12} />
                 Followers
               </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-accent">{currentUser.recentPosts}</p>
-              <p className="text-xs text-foreground/60">Posts</p>
+              <p className="text-2xl font-bold text-white">{currentUser.recentPosts}</p>
+              <p className="text-xs text-white/60">Posts</p>
             </div>
           </div>
 
           {/* Logout */}
-          <div className="border-t border-border p-4">
+          <div className="border-t border-[#00845C] p-4">
             <button
               onClick={() => {
                 setIsOpen(false);
                 onLogout();
               }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg text-sm font-semibold transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm font-semibold transition-colors"
             >
               <LogOut size={16} />
               Logout
