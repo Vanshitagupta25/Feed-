@@ -109,7 +109,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="What's on your mind? Share your feedback, ideas, or thoughts..."
-              className="w-full min-h-32 px-4 py-3 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all resize-none"
+              className="w-full min-h-32 px-4 py-3 bg-[#000000] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent transition-all resize-none"
               autoFocus
             />
             <p className="text-xs text-white/50">{content.length} characters</p>
@@ -135,7 +135,7 @@ export default function PostCreationScreen({ isOpen, currentUser, onClose, onSub
             <button
               type="button"
               onClick={triggerFileInput}
-              className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-[#0a0a0a] border-2 border-dashed border-[#333] rounded-xl text-white/70 hover:border-[#00A870] hover:bg-[#00A870]/5 transition-all"
+              className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-[#000000] border-2 border-dashed border-[#333] rounded-xl text-white/70 hover:border-[#00A870] hover:bg-[#00A870]/5 transition-all"
             >
               <Upload size={20} />
               <span className="text-sm font-medium">

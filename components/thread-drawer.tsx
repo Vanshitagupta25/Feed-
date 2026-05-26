@@ -30,38 +30,36 @@ const NestedComment = ({
   onDelete: (commentId: string) => void;
 }) => {
   const childComments = allComments.filter(c => c.parentId === comment.id);
-  const indentClass = depth > 0 ? 'ml-8' : '';
-  const borderClass = depth > 0 ? 'border-l-2 border-white/30 hover:border-[#00A870]/50 pl-4 transition-colors' : '';
+  const indentClass = depth > 0 ? 'ml-6' : '';
+  const borderClass = depth > 0 ? 'border-l-2 border-[#3a3a3a] hover:border-[#006239] pl-4 transition-colors' : '';
 
   return (
-    <div className={`${indentClass} pb-6`}>
-      <div className={`${borderClass}`}>
+    <div className={`${indentClass}`}>
+      <div className={`${borderClass} pb-4`}>
         {/* Comment Header */}
         <div className="flex items-start gap-3 group">
-          <div className={`w-8 h-8 rounded-full ${comment.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+          <div className={`w-7 h-7 rounded-full ${comment.color} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0`}>
             {comment.author.charAt(0)}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2 justify-between">
-              <div className="flex items-baseline gap-2">
-                <span className="font-mono font-semibold text-white text-sm">{comment.author}</span>
-                <span className="text-xs text-white/50">{comment.timestamp}</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-[#DDE8E3] text-sm">{comment.author}</span>
+              <span className="text-xs text-[#666]">{comment.timestamp}</span>
               {isAdmin && (
-                <button onClick={() => onDelete(comment.id)} className="p-1 rounded-lg text-red-300 hover:bg-red-500/20 transition-all">
-                  <Trash2 size={14} />
+                <button onClick={() => onDelete(comment.id)} className="ml-auto p-1 rounded text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
+                  <Trash2 size={12} />
                 </button>
               )}
             </div>
 
             {/* Comment Content */}
-            <p className="text-sm text-white/90 mt-2 leading-relaxed break-words">{comment.content}</p>
+            <p className="text-sm text-[#ccc] mt-1 leading-relaxed break-words">{comment.content}</p>
 
-            {/* Reply Button - passes comment id and author for targeting */}
+            {/* Reply Button */}
             <button
               onClick={() => onReply(comment.id, comment.author)}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-[#00A870] transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[#666] hover:text-[#006239] transition-colors"
             >
               <Reply size={12} />
               <span>Reply</span>
@@ -70,9 +68,9 @@ const NestedComment = ({
         </div>
       </div>
 
-      {/* Nested Replies */}
+      {/* Nested Replies - No overflow hidden */}
       {childComments.length > 0 && (
-        <div className="mt-4">
+        <div className="mt-2">
           {childComments.map((childComment) => (
             <NestedComment
               key={childComment.id}
@@ -109,7 +107,6 @@ export default function ThreadDrawer({
 
   const rootComments = comments.filter(c => c.parentId === null);
 
-  // Scroll-spy logic: hide Create Post button when scrolled into comment zone
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     const commentsStart = commentsStartRef.current;
@@ -119,8 +116,6 @@ export default function ThreadDrawer({
     const handleScroll = () => {
       const commentsRect = commentsStart.getBoundingClientRect();
       const containerRect = scrollContainer.getBoundingClientRect();
-      
-      // Check if comments section is in view (user has scrolled into comment zone)
       const isInCommentZone = commentsRect.top < containerRect.top + 100;
       
       if (isInCommentZone !== hasScrolledIntoComments) {
@@ -145,7 +140,6 @@ export default function ThreadDrawer({
   const handleInputBlur = () => {
     if (!replyContent.trim()) {
       setIsInputFocused(false);
-      // Only show Create Post if not scrolled into comments
       if (onHideCreatePost && !hasScrolledIntoComments) {
         onHideCreatePost(false);
       }
@@ -166,7 +160,6 @@ export default function ThreadDrawer({
 
   const handleReplyToComment = (commentId: string, author: string) => {
     setReplyingTo({ id: commentId, author });
-    // Focus the input when replying
     inputRef.current?.focus();
   };
 
@@ -180,27 +173,27 @@ export default function ThreadDrawer({
   };
 
   return (
-    <div className="w-96 border-l border-[#00845C] bg-[#006239] flex flex-col">
+    <div className="w-96 border-l border-[#3a3a3a] bg-[#242424] flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#00845C] flex items-center justify-between bg-[#0a0a0a] backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center gap-2 text-white font-semibold">
+      <div className="px-5 py-4 border-b border-[#3a3a3a] flex items-center justify-between bg-[#1a1a1a] flex-shrink-0">
+        <div className="flex items-center gap-2 text-[#DDE8E3] font-semibold">
           <MessageCircle size={18} />
           <span>Thread</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-white/60 hover:text-white"
+          className="p-1.5 hover:bg-[#333] rounded-lg transition-all text-[#666] hover:text-[#DDE8E3]"
         >
           <X size={20} />
         </button>
       </div>
 
-      {/* Scrollable Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-        {/* Parent Post - Pinned */}
-        <div className="px-6 py-5 border-b border-[#00845C]/50 bg-[#0a0a0a] sticky top-0 z-5">
+      {/* Scrollable Content - Fixed overflow */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        {/* Parent Post */}
+        <div className="px-5 py-5 border-b border-[#3a3a3a] bg-[#1a1a1a]">
           <div className="mb-3">
-            <span className="text-xs font-bold text-[#00A870] uppercase tracking-wider">Parent Post</span>
+            <span className="text-xs font-bold text-[#006239] uppercase tracking-wider">Parent Post</span>
           </div>
 
           <div className="flex items-start gap-3 group">
@@ -209,23 +202,21 @@ export default function ThreadDrawer({
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2 justify-between">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono font-semibold text-white text-sm">{post.author}</span>
-                  <span className="text-xs text-white/50">{post.timestamp}</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-[#DDE8E3] text-sm">{post.author}</span>
+                <span className="text-xs text-[#666]">{post.timestamp}</span>
               </div>
 
-              <h3 className="font-bold text-white text-sm mt-2">{post.title}</h3>
-              <p className="text-sm text-white/80 mt-2 leading-relaxed">{post.content}</p>
+              <h3 className="font-semibold text-[#DDE8E3] text-sm mt-2">{post.title}</h3>
+              <p className="text-sm text-[#aaa] mt-2 leading-relaxed">{post.content}</p>
 
-              {/* Post Image in Thread */}
+              {/* Post Image - Controlled Size */}
               {post.image && (
-                <div className="mt-3 w-full h-40 rounded-xl overflow-hidden">
+                <div className="mt-3">
                   <img
                     src={post.image}
                     alt="Post media"
-                    className="w-full h-full object-cover"
+                    className="max-h-[200px] max-w-full w-auto rounded-lg object-contain bg-[#0a0a0a]"
                     crossOrigin="anonymous"
                   />
                 </div>
@@ -234,10 +225,10 @@ export default function ThreadDrawer({
           </div>
         </div>
 
-        {/* Comments Section - marker for scroll-spy */}
-        <div ref={commentsStartRef} className="px-6 py-6">
+        {/* Comments Section - No restrictive overflow */}
+        <div ref={commentsStartRef} className="px-5 py-5">
           {rootComments.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {rootComments.map((comment) => (
                 <NestedComment
                   key={comment.id}
@@ -252,21 +243,21 @@ export default function ThreadDrawer({
             </div>
           ) : (
             <div className="text-center py-12">
-              <MessageCircle size={32} className="mx-auto mb-3 text-white/30" />
-              <p className="text-sm text-white/60">No replies yet. Start the conversation!</p>
+              <MessageCircle size={32} className="mx-auto mb-3 text-[#444]" />
+              <p className="text-sm text-[#666]">No replies yet. Start the conversation!</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Reply Input */}
-      <div className="px-6 py-5 border-t border-[#00845C] bg-[#0a0a0a] backdrop-blur-sm space-y-3">
+      {/* Reply Input - Fixed at bottom */}
+      <div className="px-5 py-4 border-t border-[#3a3a3a] bg-[#1a1a1a] flex-shrink-0 space-y-3">
         {replyingTo && (
-          <div className="bg-[#1a1a1a] px-3 py-2 rounded-lg flex items-center justify-between text-xs border border-[#333]">
-            <span className="text-white/70">Replying to <strong className="text-[#00A870]">@{replyingTo.author}</strong></span>
+          <div className="bg-[#2a2a2a] px-3 py-2 rounded-lg flex items-center justify-between text-xs border border-[#3a3a3a]">
+            <span className="text-[#888]">Replying to <strong className="text-[#006239]">@{replyingTo.author}</strong></span>
             <button
               onClick={() => setReplyingTo(null)}
-              className="text-white/50 hover:text-white transition-colors"
+              className="text-[#666] hover:text-[#DDE8E3] transition-colors"
             >
               <X size={14} />
             </button>
@@ -279,21 +270,21 @@ export default function ThreadDrawer({
           onChange={(e) => setReplyContent(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          placeholder={replyingTo ? `Reply to @${replyingTo.author}...` : "Reply anonymously to this thread..."}
-          className="w-full min-h-16 px-4 py-3 bg-[#0a0a0a] border border-[#333] rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 focus:border-transparent resize-none transition-all"
+          placeholder={replyingTo ? `Reply to @${replyingTo.author}...` : "Reply to this thread..."}
+          className="w-full min-h-16 px-4 py-3 bg-[#000000] border border-[#3a3a3a] rounded-lg text-[#DDE8E3] text-sm placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-[#006239]/50 focus:border-transparent resize-none transition-all"
         />
 
         <div className="flex gap-2">
           <button
             onClick={handleCancelReply}
-            className="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 font-medium transition-colors text-xs"
+            className="flex-1 px-4 py-2 rounded-lg bg-[#333] hover:bg-[#444] text-[#aaa] font-medium transition-colors text-xs"
           >
             Cancel
           </button>
           <button
             onClick={handleReply}
             disabled={!replyContent.trim()}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#00A870] to-[#006239] hover:from-[#00A870]/90 hover:to-[#006239]/90 disabled:from-[#4A7A66] disabled:to-[#4A7A66] disabled:cursor-not-allowed text-white font-semibold transition-all text-xs"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#006239] hover:bg-[#005230] disabled:bg-[#333] disabled:text-[#666] disabled:cursor-not-allowed text-white font-semibold transition-all text-xs"
           >
             <Send size={14} />
             <span>Reply</span>

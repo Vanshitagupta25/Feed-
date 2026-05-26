@@ -114,17 +114,14 @@ export default function Feed({
     let downvoteDelta = 0;
 
     if (currentVote === direction) {
-      // Undo vote
       if (direction === 'up') upvoteDelta = -1;
       else downvoteDelta = -1;
       setPostVotes((prev) => ({ ...prev, [postId]: null }));
     } else if (currentVote === null || currentVote === undefined) {
-      // New vote
       if (direction === 'up') upvoteDelta = 1;
       else downvoteDelta = 1;
       setPostVotes((prev) => ({ ...prev, [postId]: direction }));
     } else {
-      // Switching vote
       if (direction === 'up') {
         upvoteDelta = 1;
         downvoteDelta = -1;
@@ -164,46 +161,46 @@ export default function Feed({
   const getShares = (post: Post) => postMetrics[post.id]?.shares ?? post.shares;
 
   return (
-    <div className="flex-1 flex flex-col bg-[#DDE8E3] border-r border-border overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#242424] border-r border-[#3a3a3a] overflow-hidden">
       {/* Feed Header */}
-      <div className="px-6 py-4 border-b border-border bg-[#006239] backdrop-blur-sm sticky top-0 z-10">
+      <div className="px-6 py-4 border-b border-[#3a3a3a] bg-[#006239] sticky top-0 z-10">
         <h2 className="text-lg font-bold text-white">#{channel?.name || 'general'}</h2>
         <p className="text-xs text-white/70 mt-1">{channel?.description || 'Discussions'}</p>
       </div>
 
-      {/* Scrollable Feed */}
-      <div className="flex-1 overflow-y-auto py-4">
-        {/* Posts */}
-        <div className="space-y-4 px-3">
+      {/* Scrollable Feed - Reddit/Discord Style */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Posts - Continuous Thread Stream */}
+        <div className="divide-y divide-[#3a3a3a]">
           {posts.map((post) => (
             <div
               key={post.id}
               onClick={() => onSelectThread(post.id)}
-              className="max-w-[92%] mx-auto p-6 bg-[#006239] hover:bg-[#005230] transition-all duration-200 cursor-pointer group rounded-xl shadow-lg"
+              className="px-4 py-4 hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
             >
-              {/* Post Container - Reddit/Twitter Style */}
-              <div className="flex gap-4">
+              {/* Post Container - Clean Minimal Layout */}
+              <div className="flex gap-3">
                 {/* Vote Column */}
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-0.5 pt-1">
                   <button
                     onClick={(e) => toggleVote(e, post.id, 'up', post)}
-                    className={`p-1.5 rounded-lg transition-all ${
+                    className={`p-1 rounded transition-all ${
                       postVotes[post.id] === 'up'
-                        ? 'bg-white/30 text-white'
-                        : 'text-white/50 hover:bg-white/10 hover:text-white'
+                        ? 'text-[#006239]'
+                        : 'text-[#666] hover:text-[#006239]'
                     }`}
                   >
                     <ChevronUp size={18} />
                   </button>
-                  <span className={`text-sm font-bold ${postVotes[post.id] === 'up' ? 'text-white' : postVotes[post.id] === 'down' ? 'text-red-300' : 'text-white/70'}`}>
+                  <span className={`text-xs font-bold ${postVotes[post.id] === 'up' ? 'text-[#006239]' : postVotes[post.id] === 'down' ? 'text-red-400' : 'text-[#888]'}`}>
                     {getUpvotes(post) - getDownvotes(post)}
                   </span>
                   <button
                     onClick={(e) => toggleVote(e, post.id, 'down', post)}
-                    className={`p-1.5 rounded-lg transition-all ${
+                    className={`p-1 rounded transition-all ${
                       postVotes[post.id] === 'down'
-                        ? 'bg-red-500/30 text-red-300'
-                        : 'text-white/50 hover:bg-red-500/10 hover:text-red-300'
+                        ? 'text-red-400'
+                        : 'text-[#666] hover:text-red-400'
                     }`}
                   >
                     <ChevronDown size={18} />
@@ -212,81 +209,50 @@ export default function Feed({
 
                 {/* Main Content */}
                 <div className="flex-1 min-w-0">
-                  {/* Author & Avatar Row */}
-                  <div className="flex items-center gap-3 mb-3 justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full ${post.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-                        {post.author.charAt(0)}
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-mono font-semibold text-white text-sm">{post.author}</span>
-                        <span className="text-xs text-white/50">· {post.timestamp}</span>
-                      </div>
+                  {/* Author Row */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-6 h-6 rounded-full ${post.color} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0`}>
+                      {post.author.charAt(0)}
                     </div>
+                    <span className="font-medium text-[#DDE8E3] text-sm">{post.author}</span>
+                    <span className="text-xs text-[#666]">{post.timestamp}</span>
                     {isAdmin && (
                       <button
                         onClick={(e) => handleDeletePost(e, post.id)}
-                        className="p-1.5 rounded-lg text-red-300 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
+                        className="ml-auto p-1 rounded text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
 
-                  {/* Text Content Area */}
-                  <div className="mb-4">
-                    <h3 className="text-base font-bold text-white mb-2 leading-snug">{post.title}</h3>
-                    <p className="text-sm text-white/80 leading-relaxed">{post.content}</p>
-                  </div>
+                  {/* Title */}
+                  <h3 className="text-[15px] font-semibold text-[#DDE8E3] mb-1 leading-snug">{post.title}</h3>
 
-                  {/* Embedded Media Image Box */}
+                  {/* Content */}
+                  <p className="text-sm text-[#aaa] leading-relaxed mb-3">{post.content}</p>
+
+                  {/* Embedded Media - Controlled Size */}
                   {post.image && (
-                    <div className="mb-4 w-full h-52 rounded-xl overflow-hidden bg-white/10">
+                    <div className="mb-3 inline-block">
                       <img
                         src={post.image}
                         alt="Post media"
-                        className="w-full h-full object-cover"
+                        className="max-h-[350px] max-w-full w-auto rounded-lg object-contain bg-[#1a1a1a]"
                         crossOrigin="anonymous"
                       />
                     </div>
                   )}
 
                   {/* Metrics Bar */}
-                  <div className="flex items-center gap-6 pt-3 border-t border-white/20 text-xs font-medium">
-                    {/* Votes */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => toggleVote(e, post.id, 'up', post)}
-                        className={`transition-colors ${
-                          postVotes[post.id] === 'up'
-                            ? 'text-white'
-                            : 'text-white/60 hover:text-white'
-                        }`}
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                      <span className={postVotes[post.id] === 'up' ? 'text-white font-semibold' : postVotes[post.id] === 'down' ? 'text-red-300 font-semibold' : 'text-white/60'}>
-                        {getUpvotes(post) - getDownvotes(post)}
-                      </span>
-                      <button
-                        onClick={(e) => toggleVote(e, post.id, 'down', post)}
-                        className={`transition-colors ${
-                          postVotes[post.id] === 'down'
-                            ? 'text-red-300'
-                            : 'text-white/60 hover:text-red-300'
-                        }`}
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
-
+                  <div className="flex items-center gap-4 text-xs text-[#666]">
                     {/* Likes */}
                     <button
                       onClick={(e) => toggleLike(e, post.id, post)}
                       className={`flex items-center gap-1.5 transition-colors ${
                         likes[post.id]
-                          ? 'text-pink-300 font-semibold'
-                          : 'text-white/60 hover:text-pink-300'
+                          ? 'text-pink-400'
+                          : 'hover:text-pink-400'
                       }`}
                     >
                       <ThumbsUp size={14} fill={likes[post.id] ? 'currentColor' : 'none'} />
@@ -294,9 +260,9 @@ export default function Feed({
                     </button>
 
                     {/* Comments */}
-                    <div className="flex items-center gap-1.5 text-white/60">
+                    <div className="flex items-center gap-1.5">
                       <MessageCircle size={14} />
-                      <span>{getCommentCount(post.id)}</span>
+                      <span>{getCommentCount(post.id)} comments</span>
                     </div>
 
                     {/* Reposts */}
@@ -304,8 +270,8 @@ export default function Feed({
                       onClick={(e) => toggleRepost(e, post.id, post)}
                       className={`flex items-center gap-1.5 transition-colors ${
                         reposts[post.id]
-                          ? 'text-green-300 font-semibold'
-                          : 'text-white/60 hover:text-green-300'
+                          ? 'text-[#006239]'
+                          : 'hover:text-[#006239]'
                       }`}
                     >
                       <Repeat2 size={14} />
@@ -317,8 +283,8 @@ export default function Feed({
                       onClick={(e) => toggleShare(e, post.id, post)}
                       className={`flex items-center gap-1.5 transition-colors ${
                         shares[post.id]
-                          ? 'text-blue-300 font-semibold'
-                          : 'text-white/60 hover:text-blue-300'
+                          ? 'text-blue-400'
+                          : 'hover:text-blue-400'
                       }`}
                     >
                       <Share2 size={14} />

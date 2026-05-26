@@ -115,7 +115,7 @@ export default function Sidebar({
                   placeholder="e.g., feedback-requests"
                   value={newChannelName}
                   onChange={(e) => setNewChannelName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
+                  className="w-full px-3 py-2 bg-[#000000] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
                 />
               </div>
 
@@ -126,7 +126,7 @@ export default function Sidebar({
                   placeholder="What is this channel for?"
                   value={newChannelDesc}
                   onChange={(e) => setNewChannelDesc(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
+                  className="w-full px-3 py-2 bg-[#000000] border border-[#333] rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#00A870]/50 text-sm transition-all"
                 />
               </div>
             </div>

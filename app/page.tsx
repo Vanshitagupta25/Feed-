@@ -371,7 +371,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#DDE8E3] text-foreground overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-[#242424] text-[#DDE8E3] overflow-hidden">
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
