@@ -262,8 +262,8 @@ export default function Feed({
       </motion.div>
 
       {/* Scrollable Feed */}
-      <div className="flex-1 overflow-y-auto py-4">
-        <div className="space-y-4 px-3 md:px-4 max-w-2xl mx-auto">
+      <div className="flex-1 overflow-y-auto py-2">
+        <div className="space-y-3 px-2 md:px-3 max-w-2xl mx-auto">
           <AnimatePresence>
             {posts.map((post, index) => (
               <motion.div
