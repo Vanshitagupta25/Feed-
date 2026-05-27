@@ -1,7 +1,8 @@
 'use client';
 
 import { MessageCircle, Share2, Trash2, ChevronUp, ChevronDown, ThumbsUp, Repeat2, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Post, Comment, Channel, User } from '@/app/page';
 import ProfileToggle from './profile-toggle';
@@ -43,13 +44,14 @@ export default function Feed({
   onUpdateAvatar,
   onOpenSearch,
 }: FeedProps) {
+  const router = useRouter();
   const [likes, setLikes] = useState<Record<string, boolean>>({});
   const [reposts, setReposts] = useState<Record<string, boolean>>({});
   const [shares, setShares] = useState<Record<string, boolean>>({});
   const [postVotes, setPostVotes] = useState<Record<string, 'up' | 'down' | null>>({});
   const [postMetrics, setPostMetrics] = useState<Record<string, { upvotes: number; downvotes: number; likes: number; reposts: number; shares: number }>>({});
   const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
-  const [lightboxImage, setLightboxImage] = useState<{ url: string; metrics: { likes: number; comments: number; shares: number; reposts: number } } | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; postId: string; metrics: { likes: number; comments: number; shares: number; reposts: number } } | null>(null);
 
   const initMetrics = (postId: string, post: Post) => {
     if (!postMetrics[postId]) {
@@ -158,6 +160,7 @@ export default function Feed({
     if (post.image) {
       setLightboxImage({
         url: post.image,
+        postId: post.id,
         metrics: {
           likes: getLikes(post),
           comments: getCommentCount(post.id),
@@ -166,6 +169,14 @@ export default function Feed({
         },
       });
     }
+  };
+
+  const navigateToThread = (e: React.MouseEvent, postId: string) => {
+    e.stopPropagation();
+    // Save posts and comments to localStorage for the thread page
+    localStorage.setItem('verge_posts', JSON.stringify(posts));
+    localStorage.setItem('verge_comments', JSON.stringify(comments));
+    router.push(`/thread/${postId}`);
   };
 
   const getCommentCount = (postId: string) => {
@@ -222,20 +233,20 @@ export default function Feed({
 
           {/* Right */}
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Search Icon */}
+            {/* Search Icon - Raw transparent button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onOpenSearch}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
+              className="p-2 transition-colors"
               title="Search"
             >
-              <Search size={18} className="text-white" />
+              <Search size={18} className="text-white/80 hover:text-white" />
             </motion.button>
 
-            {/* Theme Toggle Placeholder */}
-            <div className="relative w-14 h-8 rounded-full bg-[#111827] border border-white/20 flex items-center">
-              <div className="absolute left-1 w-6 h-6 rounded-full bg-white/90" />
+            {/* Theme Toggle - Locked to dark mode (static visual) */}
+            <div className="relative w-14 h-8 rounded-full bg-[#1f2937] border border-[#374151] flex items-center cursor-not-allowed" title="Dark mode locked">
+              <div className="absolute left-1 w-6 h-6 rounded-full bg-[#374151]" />
             </div>
 
             {currentUser && (
@@ -334,7 +345,7 @@ export default function Feed({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={(e) => handleDeletePost(e, post.id)}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
+                          className="p-1.5 text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                         >
                           <Trash2 size={16} />
                         </motion.button>
@@ -391,11 +402,16 @@ export default function Feed({
                         <span>{getLikes(post)}</span>
                       </motion.button>
 
-                      {/* Comments */}
-                      <div className="flex items-center gap-1.5 text-gray-400">
+                      {/* Comments - Navigates to thread */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => navigateToThread(e, post.id)}
+                        className="flex items-center gap-1.5 text-gray-400 hover:text-[#00A870] transition-colors"
+                      >
                         <MessageCircle size={14} />
                         <span>{getCommentCount(post.id)}</span>
-                      </div>
+                      </motion.button>
 
                       {/* Reposts */}
                       <motion.button
@@ -439,8 +455,25 @@ export default function Feed({
       <ImageLightbox
         isOpen={!!lightboxImage}
         imageUrl={lightboxImage?.url || ''}
+        postId={lightboxImage?.postId}
         onClose={() => setLightboxImage(null)}
         metrics={lightboxImage?.metrics}
+        onMetricsUpdate={(updatedMetrics) => {
+          if (lightboxImage?.postId) {
+            const post = posts.find(p => p.id === lightboxImage.postId);
+            if (post) {
+              setPostMetrics((prev) => ({
+                ...prev,
+                [lightboxImage.postId]: {
+                  ...(prev[lightboxImage.postId] || { upvotes: post.upvotes, downvotes: post.downvotes }),
+                  likes: updatedMetrics.likes,
+                  shares: updatedMetrics.shares,
+                  reposts: updatedMetrics.reposts,
+                },
+              }));
+            }
+          }
+        }}
       />
     </div>
   );

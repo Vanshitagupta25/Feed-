@@ -49,7 +49,7 @@ const NestedComment = ({
                 <span className="text-xs text-white/50">{comment.timestamp}</span>
               </div>
               {isAdmin && (
-                <button onClick={() => onDelete(comment.id)} className="p-1 rounded-lg text-red-300 hover:bg-red-500/20 transition-all">
+                <button onClick={() => onDelete(comment.id)} className="p-1 text-red-300 transition-all">
                   <Trash2 size={14} />
                 </button>
               )}

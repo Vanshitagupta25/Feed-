@@ -1,23 +1,37 @@
 'use client';
 
-import { X, Heart, MessageCircle, Share2, Eye, Repeat2 } from 'lucide-react';
+import { X, Heart, MessageCircle, Share2, Repeat2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ImageLightboxProps {
   isOpen: boolean;
   imageUrl: string;
   onClose: () => void;
+  postId?: string;
   metrics?: {
     likes: number;
     comments: number;
     shares: number;
     reposts: number;
-    views?: number;
   };
+  onMetricsUpdate?: (metrics: { likes: number; shares: number; reposts: number }) => void;
 }
 
-export default function ImageLightbox({ isOpen, imageUrl, onClose, metrics }: ImageLightboxProps) {
+export default function ImageLightbox({ isOpen, imageUrl, onClose, postId, metrics, onMetricsUpdate }: ImageLightboxProps) {
+  const [liked, setLiked] = useState(false);
+  const [shared, setShared] = useState(false);
+  const [reposted, setReposted] = useState(false);
+  const [localMetrics, setLocalMetrics] = useState(metrics);
+
+  // Sync metrics when props change
+  useEffect(() => {
+    setLocalMetrics(metrics);
+    setLiked(false);
+    setShared(false);
+    setReposted(false);
+  }, [metrics, isOpen]);
+
   // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,6 +50,39 @@ export default function ImageLightbox({ isOpen, imageUrl, onClose, metrics }: Im
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLiked = !liked;
+    setLiked(newLiked);
+    if (localMetrics) {
+      const newLikes = localMetrics.likes + (newLiked ? 1 : -1);
+      setLocalMetrics({ ...localMetrics, likes: newLikes });
+      onMetricsUpdate?.({ likes: newLikes, shares: localMetrics.shares, reposts: localMetrics.reposts });
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newShared = !shared;
+    setShared(newShared);
+    if (localMetrics) {
+      const newShares = localMetrics.shares + (newShared ? 1 : -1);
+      setLocalMetrics({ ...localMetrics, shares: newShares });
+      onMetricsUpdate?.({ likes: localMetrics.likes, shares: newShares, reposts: localMetrics.reposts });
+    }
+  };
+
+  const handleRepost = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newReposted = !reposted;
+    setReposted(newReposted);
+    if (localMetrics) {
+      const newReposts = localMetrics.reposts + (newReposted ? 1 : -1);
+      setLocalMetrics({ ...localMetrics, reposts: newReposts });
+      onMetricsUpdate?.({ likes: localMetrics.likes, shares: localMetrics.shares, reposts: newReposts });
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -74,43 +121,61 @@ export default function ImageLightbox({ isOpen, imageUrl, onClose, metrics }: Im
             />
           </div>
 
-          {/* Metrics strip at bottom */}
-          {metrics && (
+          {/* Interactive Metrics strip at bottom */}
+          {localMetrics && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.15 }}
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent"
+              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-center gap-8 py-6 px-4">
-                <div className="flex items-center gap-2 text-white/90">
-                  <Heart size={20} className="text-pink-400" />
-                  <span className="text-sm font-medium">{metrics.likes.toLocaleString()}</span>
+              <div className="flex items-center justify-center gap-8 md:gap-12 py-6 px-4">
+                {/* Likes - Interactive */}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 transition-colors ${
+                    liked ? 'text-pink-400' : 'text-white/80 hover:text-pink-400'
+                  }`}
+                >
+                  <Heart size={22} fill={liked ? 'currentColor' : 'none'} />
+                  <span className="text-sm font-medium">{localMetrics.likes.toLocaleString()}</span>
+                </motion.button>
+                
+                {/* Comments - Static (display only) */}
+                <div className="flex items-center gap-2 text-white/80">
+                  <MessageCircle size={22} className="text-blue-400" />
+                  <span className="text-sm font-medium">{localMetrics.comments.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex items-center gap-2 text-white/90">
-                  <MessageCircle size={20} className="text-blue-400" />
-                  <span className="text-sm font-medium">{metrics.comments.toLocaleString()}</span>
-                </div>
+                {/* Reposts - Interactive */}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleRepost}
+                  className={`flex items-center gap-2 transition-colors ${
+                    reposted ? 'text-green-400' : 'text-white/80 hover:text-green-400'
+                  }`}
+                >
+                  <Repeat2 size={22} />
+                  <span className="text-sm font-medium">{localMetrics.reposts.toLocaleString()}</span>
+                </motion.button>
                 
-                <div className="flex items-center gap-2 text-white/90">
-                  <Repeat2 size={20} className="text-green-400" />
-                  <span className="text-sm font-medium">{metrics.reposts.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-white/90">
-                  <Share2 size={20} className="text-purple-400" />
-                  <span className="text-sm font-medium">{metrics.shares.toLocaleString()}</span>
-                </div>
-
-                {metrics.views !== undefined && (
-                  <div className="flex items-center gap-2 text-white/90">
-                    <Eye size={20} className="text-yellow-400" />
-                    <span className="text-sm font-medium">{metrics.views.toLocaleString()}</span>
-                  </div>
-                )}
+                {/* Shares - Interactive */}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleShare}
+                  className={`flex items-center gap-2 transition-colors ${
+                    shared ? 'text-purple-400' : 'text-white/80 hover:text-purple-400'
+                  }`}
+                >
+                  <Share2 size={22} />
+                  <span className="text-sm font-medium">{localMetrics.shares.toLocaleString()}</span>
+                </motion.button>
               </div>
             </motion.div>
           )}
