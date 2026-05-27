@@ -1,46 +1,55 @@
 'use client';
 
-import { MessageCircle, Share2, Trash2, ChevronUp, ChevronDown, ThumbsUp, Repeat2 } from 'lucide-react';
+import { MessageCircle, Share2, Trash2, ChevronUp, ChevronDown, ThumbsUp, Repeat2, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import type { Post, Comment, Channel } from '@/app/page';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Post, Comment, Channel, User } from '@/app/page';
 import ProfileToggle from './profile-toggle';
 import AuthScreen from '@/components/auth-screen';
+import ImageLightbox from '@/components/image-lightbox';
 
 interface FeedProps {
   posts: Post[];
   comments: Comment[];
   channel?: Channel;
   isAdmin: boolean;
-  onSelectThread: (postId: string) => void;
   onCreatePost: (title: string, content: string) => void;
   onDeletePost: (postId: string) => void;
+  onAddComment: (postId: string, content: string, parentId: string | null) => void;
+  onDeleteComment: (commentId: string) => void;
+  currentUser: User | null;
+  isAuthenticated: boolean;
+  onAuthenticate: (user: User) => void;
+  onLogout: () => void;
+  onUpdateUsername: (newUsername: string) => void;
+  onUpdateAvatar: (avatarImage: string) => void;
+  onOpenSearch: () => void;
 }
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar: string;
-  followers: number;
-  recentPosts: number;
-}
+
+// Character limit for truncation
+const TEXT_TRUNCATE_LIMIT = 280;
 
 export default function Feed({
   posts,
   comments,
   channel,
   isAdmin,
-  onSelectThread,
   onDeletePost,
+  currentUser,
+  isAuthenticated,
+  onAuthenticate,
+  onLogout,
+  onUpdateUsername,
+  onUpdateAvatar,
+  onOpenSearch,
 }: FeedProps) {
   const [likes, setLikes] = useState<Record<string, boolean>>({});
   const [reposts, setReposts] = useState<Record<string, boolean>>({});
-  const [darkMode, setDarkMode] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [shares, setShares] = useState<Record<string, boolean>>({});
-  const [joinedChannelIds, setJoinedChannelIds] = useState<string[]>([]);
   const [postVotes, setPostVotes] = useState<Record<string, 'up' | 'down' | null>>({});
   const [postMetrics, setPostMetrics] = useState<Record<string, { upvotes: number; downvotes: number; likes: number; reposts: number; shares: number }>>({});
+  const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; metrics: { likes: number; comments: number; shares: number; reposts: number } } | null>(null);
 
   const initMetrics = (postId: string, post: Post) => {
     if (!postMetrics[postId]) {
@@ -56,53 +65,21 @@ export default function Feed({
       }));
     }
   };
-  useEffect(() => {
-    function hyderateSession() {
-      try {
-        const loggedInStatus = window.localStorage.getItem('verge_logged_in');
-        const savedUserData = window.localStorage.getItem('verge_user');
-
-        if (loggedInStatus === 'true' && savedUserData) {
-          setCurrentUser(JSON.parse(savedUserData));
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error("Hydration error reading localStorage session:", error);
-      }
-    }
-    hyderateSession();
-  }, []);
 
   if (!isAuthenticated) {
-    return (
-      <AuthScreen
-        onAuthenticate={(user: User) => {
-          localStorage.setItem('verge_logged_in', 'true');
-          localStorage.setItem('verge_user', JSON.stringify(user));
-          setCurrentUser(user);
-          setIsAuthenticated(true);
-        }}
-      />
-    );
+    return <AuthScreen onAuthenticate={onAuthenticate} />;
   }
 
   const toggleLike = (e: React.MouseEvent, postId: string, post: Post) => {
     e.stopPropagation();
     initMetrics(postId, post);
     const isLiked = likes[postId];
-    setLikes((prev) => ({
-      ...prev,
-      [postId]: !isLiked,
-    }));
+    setLikes((prev) => ({ ...prev, [postId]: !isLiked }));
     setPostMetrics((prev) => ({
       ...prev,
       [postId]: {
         ...prev[postId],
-        upvotes: prev[postId]?.upvotes ?? post.upvotes,
-        downvotes: prev[postId]?.downvotes ?? post.downvotes,
         likes: (prev[postId]?.likes ?? post.likes) + (isLiked ? -1 : 1),
-        reposts: prev[postId]?.reposts ?? post.reposts,
-        shares: prev[postId]?.shares ?? post.shares,
       },
     }));
   };
@@ -111,19 +88,12 @@ export default function Feed({
     e.stopPropagation();
     initMetrics(postId, post);
     const isReposted = reposts[postId];
-    setReposts((prev) => ({
-      ...prev,
-      [postId]: !isReposted,
-    }));
+    setReposts((prev) => ({ ...prev, [postId]: !isReposted }));
     setPostMetrics((prev) => ({
       ...prev,
       [postId]: {
         ...prev[postId],
-        upvotes: prev[postId]?.upvotes ?? post.upvotes,
-        downvotes: prev[postId]?.downvotes ?? post.downvotes,
-        likes: prev[postId]?.likes ?? post.likes,
         reposts: (prev[postId]?.reposts ?? post.reposts) + (isReposted ? -1 : 1),
-        shares: prev[postId]?.shares ?? post.shares,
       },
     }));
   };
@@ -132,18 +102,11 @@ export default function Feed({
     e.stopPropagation();
     initMetrics(postId, post);
     const isShared = shares[postId];
-    setShares((prev) => ({
-      ...prev,
-      [postId]: !isShared,
-    }));
+    setShares((prev) => ({ ...prev, [postId]: !isShared }));
     setPostMetrics((prev) => ({
       ...prev,
       [postId]: {
         ...prev[postId],
-        upvotes: prev[postId]?.upvotes ?? post.upvotes,
-        downvotes: prev[postId]?.downvotes ?? post.downvotes,
-        likes: prev[postId]?.likes ?? post.likes,
-        reposts: prev[postId]?.reposts ?? post.reposts,
         shares: (prev[postId]?.shares ?? post.shares) + (isShared ? -1 : 1),
       },
     }));
@@ -157,17 +120,14 @@ export default function Feed({
     let downvoteDelta = 0;
 
     if (currentVote === direction) {
-      // Undo vote
       if (direction === 'up') upvoteDelta = -1;
       else downvoteDelta = -1;
       setPostVotes((prev) => ({ ...prev, [postId]: null }));
     } else if (currentVote === null || currentVote === undefined) {
-      // New vote
       if (direction === 'up') upvoteDelta = 1;
       else downvoteDelta = 1;
       setPostVotes((prev) => ({ ...prev, [postId]: direction }));
     } else {
-      // Switching vote
       if (direction === 'up') {
         upvoteDelta = 1;
         downvoteDelta = -1;
@@ -184,11 +144,28 @@ export default function Feed({
         ...prev[postId],
         upvotes: (prev[postId]?.upvotes ?? post.upvotes) + upvoteDelta,
         downvotes: (prev[postId]?.downvotes ?? post.downvotes) + downvoteDelta,
-        likes: prev[postId]?.likes ?? post.likes,
-        reposts: prev[postId]?.reposts ?? post.reposts,
-        shares: prev[postId]?.shares ?? post.shares,
       },
     }));
+  };
+
+  const toggleExpand = (e: React.MouseEvent, postId: string) => {
+    e.stopPropagation();
+    setExpandedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
+  const openLightbox = (e: React.MouseEvent, post: Post) => {
+    e.stopPropagation();
+    if (post.image) {
+      setLightboxImage({
+        url: post.image,
+        metrics: {
+          likes: getLikes(post),
+          comments: getCommentCount(post.id),
+          shares: getShares(post),
+          reposts: getReposts(post),
+        },
+      });
+    }
   };
 
   const getCommentCount = (postId: string) => {
@@ -199,30 +176,6 @@ export default function Feed({
     e.stopPropagation();
     onDeletePost(postId);
   };
-  const handleLogout = () => {
-    localStorage.removeItem('verge_logged_in');
-    localStorage.removeItem('verge_user');
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setSelectedThreadId(null);
-    setShowPostCreation(false);
-  };
-
-  const handleUpdateUsername = (newUsername: string) => {
-    if (currentUser) {
-      setCurrentUser({ ...currentUser, username: newUsername });
-    }
-  };
-
-  const handleUpdateAvatar = (avatarImage: string) => {
-    if (currentUser) {
-      setCurrentUser({ ...currentUser, avatar: avatarImage });
-    }
-  };
-
-  const handleCompleteOnboarding = () => {
-    setActiveChannelId(joinedChannelIds[0] || '1');
-  };
 
   const getUpvotes = (post: Post) => postMetrics[post.id]?.upvotes ?? post.upvotes;
   const getDownvotes = (post: Post) => postMetrics[post.id]?.downvotes ?? post.downvotes;
@@ -230,216 +183,265 @@ export default function Feed({
   const getReposts = (post: Post) => postMetrics[post.id]?.reposts ?? post.reposts;
   const getShares = (post: Post) => postMetrics[post.id]?.shares ?? post.shares;
 
+  const shouldTruncate = (content: string) => content.length > TEXT_TRUNCATE_LIMIT;
+  const getTruncatedContent = (content: string) => content.slice(0, TEXT_TRUNCATE_LIMIT) + '...';
+
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.05,
+        duration: 0.3,
+        ease: 'easeOut',
+      },
+    }),
+  };
+
   return (
-    <div className="flex-1 flex flex-col bg-[#DDE8E3] border-r border-border overflow-hidden">
-
+    <div className="flex-1 flex flex-col bg-[#111827] overflow-hidden">
       {/* Feed Header */}
-      <div className="px-6 py-4 border-b border-border bg-[#006239] backdrop-blur-sm sticky top-0 z-10">
-
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="px-4 md:px-6 py-4 border-b border-[#374151] bg-[#006239] sticky top-0 z-10"
+      >
         <div className="flex items-center justify-between">
-
           {/* Left */}
           <div>
             <h2 className="text-lg font-bold text-white">
               #{channel?.name || 'general'}
             </h2>
-
             <p className="text-xs text-white/70 mt-1">
               {channel?.description || 'Discussions'}
             </p>
           </div>
 
           {/* Right */}
-          <div className="flex items-center gap-4">
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`relative w-14 h-8 rounded-full transition-all duration-300 ${darkMode ? 'bg-blue-500' : 'bg-white/30'
-                }`}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Search Icon */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onOpenSearch}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
+              title="Search"
             >
-              <div
-                className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 ${darkMode ? 'left-7' : 'left-1'
-                  }`}
-              />
-            </button>
+              <Search size={18} className="text-white" />
+            </motion.button>
+
+            {/* Theme Toggle Placeholder */}
+            <div className="relative w-14 h-8 rounded-full bg-[#111827] border border-white/20 flex items-center">
+              <div className="absolute left-1 w-6 h-6 rounded-full bg-white/90" />
+            </div>
 
             {currentUser && (
               <ProfileToggle
                 currentUser={currentUser}
-                onUpdateUsername={handleUpdateUsername}
-                onUpdateAvatar={handleUpdateAvatar}
-                onLogout={handleLogout}
+                onUpdateUsername={onUpdateUsername}
+                onUpdateAvatar={onUpdateAvatar}
+                onLogout={onLogout}
               />
             )}
-
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Scrollable Feed */}
       <div className="flex-1 overflow-y-auto py-4">
-
-        {/* Posts */}
-        <div className="space-y-4 px-3">
-
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              onClick={() => onSelectThread(post.id)}
-              className="max-w-[92%] mx-auto p-6 bg-[#006239] hover:bg-[#005230] transition-all duration-200 cursor-pointer group rounded-xl shadow-lg"
-            >
-
-              {/* Post Container */}
-              <div className="flex gap-4">
-
-                {/* Vote Column */}
-                <div className="flex flex-col items-center gap-1">
-
-                  <button
-                    onClick={(e) => toggleVote(e, post.id, 'up', post)}
-                    className={`p-1.5 rounded-lg transition-all ${postVotes[post.id] === 'up'
-                        ? 'bg-white/30 text-white'
-                        : 'text-white/50 hover:bg-white/10 hover:text-white'
+        <div className="space-y-4 px-3 md:px-4 max-w-2xl mx-auto">
+          <AnimatePresence>
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                custom={index}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, y: -20 }}
+                whileHover={{ scale: 1.01 }}
+                className="p-4 md:p-6 bg-[#1f2937] hover:bg-[#243447] transition-all duration-200 cursor-pointer group rounded-xl border border-[#374151]"
+              >
+                {/* Post Container */}
+                <div className="flex gap-3 md:gap-4">
+                  {/* Vote Column */}
+                  <div className="flex flex-col items-center gap-1">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => toggleVote(e, post.id, 'up', post)}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        postVotes[post.id] === 'up'
+                          ? 'bg-[#00A870]/30 text-[#00A870]'
+                          : 'text-gray-400 hover:bg-[#374151] hover:text-white'
                       }`}
-                  >
-                    <ChevronUp size={18} />
-                  </button>
+                    >
+                      <ChevronUp size={18} />
+                    </motion.button>
 
-                  <span
-                    className={`text-sm font-bold ${postVotes[post.id] === 'up'
-                        ? 'text-white'
-                        : postVotes[post.id] === 'down'
-                          ? 'text-red-300'
-                          : 'text-white/70'
+                    <span
+                      className={`text-sm font-bold ${
+                        postVotes[post.id] === 'up'
+                          ? 'text-[#00A870]'
+                          : postVotes[post.id] === 'down'
+                          ? 'text-red-400'
+                          : 'text-gray-300'
                       }`}
-                  >
-                    {getUpvotes(post) - getDownvotes(post)}
-                  </span>
+                    >
+                      {getUpvotes(post) - getDownvotes(post)}
+                    </span>
 
-                  <button
-                    onClick={(e) => toggleVote(e, post.id, 'down', post)}
-                    className={`p-1.5 rounded-lg transition-all ${postVotes[post.id] === 'down'
-                        ? 'bg-red-500/30 text-red-300'
-                        : 'text-white/50 hover:bg-red-500/10 hover:text-red-300'
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => toggleVote(e, post.id, 'down', post)}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        postVotes[post.id] === 'down'
+                          ? 'bg-red-500/30 text-red-400'
+                          : 'text-gray-400 hover:bg-red-500/10 hover:text-red-400'
                       }`}
-                  >
-                    <ChevronDown size={18} />
-                  </button>
-                </div>
+                    >
+                      <ChevronDown size={18} />
+                    </motion.button>
+                  </div>
 
-                {/* Main Content */}
-                <div className="flex-1 min-w-0">
+                  {/* Main Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Author Row */}
+                    <div className="flex items-center gap-3 mb-3 justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-full ${post.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}
+                        >
+                          {post.author.charAt(0)}
+                        </div>
 
-                  {/* Author Row */}
-                  <div className="flex items-center gap-3 mb-3 justify-between">
-
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full ${post.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}
-                      >
-                        {post.author.charAt(0)}
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-mono font-semibold text-white text-sm">
+                            {post.author}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            · {post.timestamp}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-mono font-semibold text-white text-sm">
-                          {post.author}
-                        </span>
-
-                        <span className="text-xs text-white/50">
-                          · {post.timestamp}
-                        </span>
-                      </div>
+                      {isAdmin && (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => handleDeletePost(e, post.id)}
+                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={16} />
+                        </motion.button>
+                      )}
                     </div>
 
-                    {isAdmin && (
-                      <button
-                        onClick={(e) => handleDeletePost(e, post.id)}
-                        className="p-1.5 rounded-lg text-red-300 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
+                    {/* Text Content with Read More/Less */}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-200 leading-relaxed">
+                        {shouldTruncate(post.content) && !expandedPosts[post.id]
+                          ? getTruncatedContent(post.content)
+                          : post.content}
+                      </p>
+                      {shouldTruncate(post.content) && (
+                        <button
+                          onClick={(e) => toggleExpand(e, post.id)}
+                          className="mt-2 text-sm font-medium text-[#00A870] hover:text-[#00A870]/80 transition-colors"
+                        >
+                          {expandedPosts[post.id] ? 'Read Less' : 'Read More'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Image - Standardized dimensions with lightbox */}
+                    {post.image && (
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        onClick={(e) => openLightbox(e, post)}
+                        className="mb-4 w-full h-[240px] md:h-[320px] rounded-xl overflow-hidden bg-[#374151] cursor-pointer"
                       >
-                        <Trash2 size={16} />
-                      </button>
+                        <img
+                          src={post.image}
+                          alt="Post media"
+                          className="w-full h-full object-cover"
+                          crossOrigin="anonymous"
+                        />
+                      </motion.div>
                     )}
-                  </div>
 
-                  {/* Text */}
-                  <div className="mb-4">
-                    <h3 className="text-base font-bold text-white mb-2 leading-snug">
-                      {post.title}
-                    </h3>
+                    {/* Metrics */}
+                    <div className="flex items-center gap-4 md:gap-6 pt-3 border-t border-[#374151] text-xs font-medium">
+                      {/* Likes */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => toggleLike(e, post.id, post)}
+                        className={`flex items-center gap-1.5 transition-colors ${
+                          likes[post.id]
+                            ? 'text-pink-400 font-semibold'
+                            : 'text-gray-400 hover:text-pink-400'
+                        }`}
+                      >
+                        <ThumbsUp size={14} fill={likes[post.id] ? 'currentColor' : 'none'} />
+                        <span>{getLikes(post)}</span>
+                      </motion.button>
 
-                    <p className="text-sm text-white/80 leading-relaxed">
-                      {post.content}
-                    </p>
-                  </div>
+                      {/* Comments */}
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <MessageCircle size={14} />
+                        <span>{getCommentCount(post.id)}</span>
+                      </div>
 
-                  {/* Image */}
-                  {post.image && (
-                    <div className="mb-4 w-full h-52 rounded-xl overflow-hidden bg-white/10">
-                      <img
-                        src={post.image}
-                        alt="Post media"
-                        className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                      />
+                      {/* Reposts */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => toggleRepost(e, post.id, post)}
+                        className={`flex items-center gap-1.5 transition-colors ${
+                          reposts[post.id]
+                            ? 'text-green-400 font-semibold'
+                            : 'text-gray-400 hover:text-green-400'
+                        }`}
+                      >
+                        <Repeat2 size={14} />
+                        <span>{getReposts(post)}</span>
+                      </motion.button>
+
+                      {/* Shares */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => toggleShare(e, post.id, post)}
+                        className={`flex items-center gap-1.5 transition-colors ${
+                          shares[post.id]
+                            ? 'text-blue-400 font-semibold'
+                            : 'text-gray-400 hover:text-blue-400'
+                        }`}
+                      >
+                        <Share2 size={14} />
+                        <span>{getShares(post)}</span>
+                      </motion.button>
                     </div>
-                  )}
-
-                  {/* Metrics */}
-                  <div className="flex items-center gap-6 pt-3 border-t border-white/20 text-xs font-medium">
-
-                    {/* Likes */}
-                    <button
-                      onClick={(e) => toggleLike(e, post.id, post)}
-                      className={`flex items-center gap-1.5 transition-colors ${likes[post.id]
-                          ? 'text-pink-300 font-semibold'
-                          : 'text-white/60 hover:text-pink-300'
-                        }`}
-                    >
-                      <ThumbsUp
-                        size={14}
-                        fill={likes[post.id] ? 'currentColor' : 'none'}
-                      />
-                      <span>{getLikes(post)}</span>
-                    </button>
-
-                    {/* Comments */}
-                    <div className="flex items-center gap-1.5 text-white/60">
-                      <MessageCircle size={14} />
-                      <span>{getCommentCount(post.id)}</span>
-                    </div>
-
-                    {/* Reposts */}
-                    <button
-                      onClick={(e) => toggleRepost(e, post.id, post)}
-                      className={`flex items-center gap-1.5 transition-colors ${reposts[post.id]
-                          ? 'text-green-300 font-semibold'
-                          : 'text-white/60 hover:text-green-300'
-                        }`}
-                    >
-                      <Repeat2 size={14} />
-                      <span>{getReposts(post)}</span>
-                    </button>
-
-                    {/* Shares */}
-                    <button
-                      onClick={(e) => toggleShare(e, post.id, post)}
-                      className={`flex items-center gap-1.5 transition-colors ${shares[post.id]
-                          ? 'text-blue-300 font-semibold'
-                          : 'text-white/60 hover:text-blue-300'
-                        }`}
-                    >
-                      <Share2 size={14} />
-                      <span>{getShares(post)}</span>
-                    </button>
-
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={!!lightboxImage}
+        imageUrl={lightboxImage?.url || ''}
+        onClose={() => setLightboxImage(null)}
+        metrics={lightboxImage?.metrics}
+      />
     </div>
   );
 }

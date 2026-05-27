@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/sidebar';
 import Feed from '@/components/feed';
-import ThreadDrawer from '@/components/thread-drawer';
 import FloatingPostFAB from '@/components/floating-post-fab';
 import PostCreationScreen from '@/components/post-creation-screen';
+import ChannelOnboarding from '@/components/channel-onboarding';
+import SearchModal from '@/components/search-modal';
 
 export interface Channel {
   id: string;
@@ -39,6 +41,7 @@ export interface Post {
   reposts: number;
   image?: string;
 }
+
 export interface User {
   id: string;
   email: string;
@@ -65,10 +68,13 @@ const getRandomColor = () => colorOptions[Math.floor(Math.random() * colorOption
 export default function Page() {
   const [isAdminView] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [joinedChannelIds, setJoinedChannelIds] = useState<string[]>([]);
   const [isCommentInputFocused, setIsCommentInputFocused] = useState(false);
-  const [selectedThreadId, setSelectedThreadId] = useState<String | null>(null);
   const [showPostCreation, setShowPostCreation] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const [channels, setChannels] = useState<Channel[]>([
     { id: '1', name: 'product-feedback', description: 'Share feedback on our products and features' },
@@ -86,7 +92,7 @@ export default function Page() {
       color: 'bg-blue-600',
       timestamp: '2 hours ago',
       title: 'Feedback Process Transparency',
-      content: 'I think we should reconsider the current feedback process. It would be great to have more transparency without attribution.',
+      content: 'I think we should reconsider the current feedback process. It would be great to have more transparency without attribution. The team has been doing amazing work, but there are still areas where we can improve our communication flow and make sure everyone feels heard in the process.',
       upvotes: 12,
       downvotes: 2,
       likes: 18,
@@ -118,7 +124,7 @@ export default function Page() {
       color: 'bg-cyan-600',
       timestamp: '6 hours ago',
       title: 'Improving API Performance',
-      content: 'We should consider migrating to a more efficient caching layer for our backend services. This could significantly reduce response times.',
+      content: 'We should consider migrating to a more efficient caching layer for our backend services. This could significantly reduce response times and improve the overall user experience across all our platforms.',
       upvotes: 15,
       downvotes: 1,
       likes: 22,
@@ -175,54 +181,6 @@ export default function Page() {
       reposts: 2,
       image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80',
     },
-    {
-      id: '7',
-      channelId: '1',
-      author: 'Clever Raccoon',
-      color: 'bg-pink-600',
-      timestamp: '5 hours ago',
-      title: 'Customer Support Workflow Enhancement',
-      content: 'Our ticket response times have improved but I believe we can do better with automated routing based on issue categories.',
-      upvotes: 11,
-      downvotes: 1,
-      likes: 16,
-      dislikes: 1,
-      shares: 6,
-      reposts: 8,
-      image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '8',
-      channelId: '2',
-      author: 'Swift Falcon',
-      color: 'bg-orange-600',
-      timestamp: '8 hours ago',
-      title: 'Microservices Architecture Discussion',
-      content: 'Should we consider breaking down the monolith into microservices? Would love to hear thoughts on the trade-offs.',
-      upvotes: 19,
-      downvotes: 3,
-      likes: 27,
-      dislikes: 4,
-      shares: 12,
-      reposts: 15,
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '9',
-      channelId: '3',
-      author: 'Wise Sage',
-      color: 'bg-emerald-600',
-      timestamp: '45 minutes ago',
-      title: 'Team Building Activity Suggestions',
-      content: 'Remote work has been great but I miss the spontaneous hallway conversations. Any ideas for virtual team bonding?',
-      upvotes: 14,
-      downvotes: 0,
-      likes: 21,
-      dislikes: 0,
-      shares: 7,
-      reposts: 9,
-      image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80',
-    },
   ]);
 
   const [comments, setComments] = useState<Comment[]>([
@@ -232,15 +190,31 @@ export default function Page() {
     { id: '2-1', postId: '2', parentId: null, author: 'Silent Owl', color: 'bg-indigo-600', content: 'Agreed, much better experience overall.', timestamp: '3.5 hours ago' },
     { id: '3-1', postId: '3', parentId: null, author: 'Quiet Eagle', color: 'bg-teal-600', content: 'Yes! Nested threads are essential for clarity.', timestamp: '5 hours ago' },
     { id: '3-2', postId: '3', parentId: null, author: 'Anon Beaver', color: 'bg-blue-600', content: 'This is exactly why we built this platform.', timestamp: '4.8 hours ago' },
-    { id: '3-3', postId: '3', parentId: '3-2', author: 'Silent Owl', color: 'bg-indigo-600', content: 'Threading fundamentally changes conversation dynamics.', timestamp: '4.5 hours ago' },
-    { id: '3-4', postId: '3', parentId: '3-3', author: 'Ghost Learner', color: 'bg-cyan-600', content: 'Exactly! It prevents response fragmentation.', timestamp: '4.2 hours ago' },
   ]);
 
-  const activePost = posts.find(
-    (p) => p.id === selectedThreadId
-  );
-
   const activeChannel = channels.find(c => c.id === activeChannelId);
+
+  // Hydrate session from localStorage
+  useEffect(() => {
+    try {
+      const loggedInStatus = window.localStorage.getItem('verge_logged_in');
+      const savedUserData = window.localStorage.getItem('verge_user');
+      const hasCompletedOnboarding = window.localStorage.getItem('verge_onboarding_complete');
+
+      if (loggedInStatus === 'true' && savedUserData) {
+        setCurrentUser(JSON.parse(savedUserData));
+        setIsAuthenticated(true);
+        
+        // Show onboarding if not completed
+        if (hasCompletedOnboarding !== 'true') {
+          setShowOnboarding(true);
+        }
+      }
+    } catch (error) {
+      console.error("Hydration error:", error);
+    }
+    setIsHydrated(true);
+  }, []);
 
   const addChannel = (name: string, description: string) => {
     const newChannel: Channel = {
@@ -262,6 +236,10 @@ export default function Page() {
       content,
       upvotes: 0,
       downvotes: 0,
+      likes: 0,
+      dislikes: 0,
+      shares: 0,
+      reposts: 0,
     };
     setPosts([newPost, ...posts]);
   };
@@ -287,6 +265,7 @@ export default function Page() {
   const deleteComment = (commentId: string) => {
     setComments(comments.filter(c => c.id !== commentId));
   };
+
   const handleJoinChannel = (channelId: string) => {
     if (!joinedChannelIds.includes(channelId)) {
       setJoinedChannelIds([...joinedChannelIds, channelId]);
@@ -313,52 +292,140 @@ export default function Page() {
     setPosts([newPost, ...posts]);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#DDE8E3] text-foreground overflow-hidden">
+  const handleAuthenticate = (user: User) => {
+    localStorage.setItem('verge_logged_in', 'true');
+    localStorage.setItem('verge_user', JSON.stringify(user));
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setShowOnboarding(true);
+  };
 
+  const handleLogout = () => {
+    localStorage.removeItem('verge_logged_in');
+    localStorage.removeItem('verge_user');
+    localStorage.removeItem('verge_onboarding_complete');
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setShowOnboarding(false);
+    setJoinedChannelIds([]);
+  };
+
+  const handleCompleteOnboarding = () => {
+    localStorage.setItem('verge_onboarding_complete', 'true');
+    setShowOnboarding(false);
+    if (joinedChannelIds.length > 0) {
+      setActiveChannelId(joinedChannelIds[0]);
+    }
+  };
+
+  const handleUpdateUsername = (newUsername: string) => {
+    if (currentUser) {
+      const updated = { ...currentUser, username: newUsername };
+      setCurrentUser(updated);
+      localStorage.setItem('verge_user', JSON.stringify(updated));
+    }
+  };
+
+  const handleUpdateAvatar = (avatarImage: string) => {
+    if (currentUser) {
+      const updated = { ...currentUser, avatar: avatarImage };
+      setCurrentUser(updated);
+      localStorage.setItem('verge_user', JSON.stringify(updated));
+    }
+  };
+
+  // Don't render until hydrated to prevent flash
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-[#111827] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00A870] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#111827] text-gray-100 overflow-hidden">
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar
-        channels={channels}
-        activeChannelId={activeChannelId}
-        onSelectChannel={setActiveChannelId}
-        onCreateChannel={addChannel}
-        isAdmin={isAdminView}
-        onAdminToggle={() => {}}
-      />
+        {/* Sidebar - Only visible when authenticated */}
+        <AnimatePresence>
+          {isAuthenticated && !showOnboarding && (
+            <motion.div
+              initial={{ x: -256, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -256, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="hidden md:block"
+            >
+              <Sidebar
+                channels={channels}
+                activeChannelId={activeChannelId}
+                onSelectChannel={setActiveChannelId}
+                onCreateChannel={addChannel}
+                isAdmin={isAdminView}
+                onAdminToggle={() => {}}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      <Feed
-        posts={posts.filter(p => p.channelId === activeChannelId)}
-        comments={comments}
-        channel={activeChannel}
-        isAdmin={isAdminView}
-        onSelectThread={setSelectedThreadId}
-        onCreatePost={addPost}
-        onDeletePost={deletePost}
-      />
-
-      {/* Floating Post Creation FAB */}
-      <FloatingPostFAB onClick={() => setShowPostCreation(true)} isVisible={!isCommentInputFocused} />
-
-      {/* Post Creation Screen */}
-      <PostCreationScreen
-        isOpen={showPostCreation}
-        currentUser={currentUser}
-        onClose={() => setShowPostCreation(false)}
-        onSubmit={handleCreatePost}
-      />
-
-      {selectedThreadId && activePost && (
-        <ThreadDrawer
-          post={activePost}
-          comments={comments.filter(c => c.postId === selectedThreadId)}
+        {/* Feed Component handles auth internally */}
+        <Feed
+          posts={posts.filter(p => p.channelId === activeChannelId)}
+          comments={comments}
+          channel={activeChannel}
           isAdmin={isAdminView}
-          onClose={() => setSelectedThreadId(null)}
+          onCreatePost={addPost}
+          onDeletePost={deletePost}
           onAddComment={addComment}
           onDeleteComment={deleteComment}
-          onHideCreatePost={setIsCommentInputFocused}
+          currentUser={currentUser}
+          isAuthenticated={isAuthenticated}
+          onAuthenticate={handleAuthenticate}
+          onLogout={handleLogout}
+          onUpdateUsername={handleUpdateUsername}
+          onUpdateAvatar={handleUpdateAvatar}
+          onOpenSearch={() => setShowSearchModal(true)}
         />
-      )}
+
+        {/* Floating Post Creation FAB - Only when authenticated */}
+        {isAuthenticated && !showOnboarding && (
+          <FloatingPostFAB 
+            onClick={() => setShowPostCreation(true)} 
+            isVisible={!isCommentInputFocused} 
+          />
+        )}
+
+        {/* Post Creation Screen */}
+        <PostCreationScreen
+          isOpen={showPostCreation}
+          currentUser={currentUser}
+          onClose={() => setShowPostCreation(false)}
+          onSubmit={handleCreatePost}
+        />
+
+        {/* Channel Onboarding - After sign in */}
+        <AnimatePresence>
+          {showOnboarding && isAuthenticated && (
+            <ChannelOnboarding
+              channels={channels}
+              joinedChannelIds={joinedChannelIds}
+              onJoinChannel={handleJoinChannel}
+              onComplete={handleCompleteOnboarding}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Search Modal */}
+        <SearchModal
+          isOpen={showSearchModal}
+          onClose={() => setShowSearchModal(false)}
+          channels={channels}
+          onSelectChannel={(channelId) => {
+            setActiveChannelId(channelId);
+            setShowSearchModal(false);
+          }}
+        />
       </div>
     </div>
   );
